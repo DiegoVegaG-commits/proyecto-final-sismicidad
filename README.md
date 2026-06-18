@@ -1,8 +1,8 @@
 # Análisis del comportamiento de la sismicidad en México (1966–2026)
 
 > Proyecto final del módulo. Analiza el catálogo histórico de sismos del Servicio Sismológico Nacional (SSN · UNAM) para caracterizar patrones temporales, geográficos y de severidad en la actividad sísmica de México.
-
-## 📋 Resumen ejecutivo
+>Diego Vega García
+##  Resumen 
 
 | Campo | Valor |
 |---|---|
@@ -33,9 +33,9 @@ Este proyecto responde tres preguntas concretas:
 
 ---
 
-## 📦 Origen de los datos
+## Origen de los datos
 
-Los datos provienen del catálogo público del **Servicio Sismológico Nacional (SSN · UNAM)**, descargado como un único archivo CSV con 50,056 eventos de magnitud ≥4.0 registrados entre el 1 de enero de 1966 y el 7 de junio de 2026. A diferencia de fuentes que requieren descarga vía API por rangos de fecha, el catálogo del SSN se distribuye como un export consolidado, por lo que el ETL lo toma como insumo directo — sin una etapa de scraping o requests HTTP por periodo.
+Los datos provienen del catálogo público del **Servicio Sismológico Nacional (SSN · UNAM)**, descargado como un único archivo CSV con 50,056 eventos de magnitud ≥4.0 registrados entre el 1 de enero de 1966 y el 7 de junio de 2026. A diferencia de fuentes que requieren descarga vía API por rangos de fecha, el catálogo del SSN se distribuye como un export consolidado, por lo que el ETL lo toma como insumo directo.
 
 ### Flujo end-to-end
 
@@ -104,7 +104,7 @@ Los datos provienen del catálogo público del **Servicio Sismológico Nacional 
         └────────────────────────────────────────┘
 ```
 
-Nota la diferencia con flujos donde el propio ETL crea las tablas: aquí el schema y las relaciones (`REFERENCES`) se definen primero y a mano en DBeaver, de modo que cualquier error de integridad referencial se detecta antes de cargar datos. El ETL solo hace `INSERT` (`if_exists="append"`), nunca `DROP`/`CREATE`, para no perder las llaves foráneas ya definidas.
+
 
 ### Por qué no se sube el CSV pesado al repo
 
@@ -118,30 +118,30 @@ Por eso el repositorio solo incluye el código que transforma y carga los datos.
 
 ---
 
-## 📁 Estructura del repositorio
+## Estructura del repositorio
 
 ```
 proyecto-final/
-├── README.md                       ← este archivo
+├── README.md                       
 ├── datasets/
-│   └── SSNMX_catalogo_19660101_20260607_m40_99.csv   ← no versionado, se coloca manualmente
+│   └── SSNMX_catalogo_19660101_20260607_m40_99.csv   
 ├── scripts/
 │   ├── 01_schema_ddl.sql           ← esquema estrella (4 dims + 1 fact) + índices
 │   ├── etl_pipeline.py             ← ETL Python end-to-end (Extract → Transform → Load)
 │   ├── generar_graficas.py         ← 5 visualizaciones estáticas (matplotlib/seaborn)
-│   └── mapa_sismos_mexico.py       ← mapa geográfico interactivo (Plotly) + PNG
+│   └── mapa_sismos_mexico.py       ← mapa geográfico PNG
 ├── analisis/
 │   └── queries_analiticas.sql      ← 6 queries con SQL avanzado
 ├── dashboard/
-│   └── app.py                      ← dashboard interactivo Streamlit + Plotly
+│   └── app.py                      ← dashboard 
 └── docs/
-    └── graficas/                   ← imágenes generadas (PNG + HTML), no versionadas
+    └── graficas/                   ← imágenes generadas (PNG)
         ├── 01_serie_anual.png
         ├── 02_top_estados.png
         ├── 03_heatmap_hora_mes.png
         ├── 04_comparacion_regiones.png
         ├── 05_evolucion_decadas.png
-        └── mapa_sismos_por_estado.png / .html
+        └── mapa_sismos_por_estado.png 
 ```
 
 ---
@@ -219,17 +219,7 @@ python scripts/mapa_sismos_mexico.py \
 
 Ambos scripts consultan Aurora directamente y guardan las imágenes en `docs/graficas/`.
 
-### 6. Levantar el dashboard interactivo
 
-```bash
-pip install streamlit
-
-$env:AURORA_HOST="sismicidad-proyecto-instance-1.cnokess0ahhv.us-east-1.rds.amazonaws.com"
-$env:AURORA_PASSWORD="TU_PASSWORD"
-python -m streamlit run dashboard/app.py
-```
-
----
 
 ## 🏗️ Modelo dimensional
 
@@ -291,3 +281,18 @@ python -m streamlit run dashboard/app.py
 **`date_key` como entero `YYYYMMDD` en lugar de `DATE`:** permite ordenamiento y filtros por rango de año directamente sobre la llave (`WHERE date_key BETWEEN 19850101 AND 19851231`) sin tener que castear tipos, y es ligeramente más eficiente para los índices que usa la fact.
 
 **Latitud, longitud y profundidad como medidas degeneradas en la fact:** no justifican una dimensión propia porque son continuas y específicas de cada evento — no se repiten entre sismos como sí lo haría una estación de monitoreo fija (a diferencia del ejemplo de calidad del aire, donde la estación sí es una entidad recurrente con sus propios atributos).
+
+### DASHBOARD
+Frecuencia de Sismos 
+<img width="2080" height="731" alt="image" src="https://github.com/user-attachments/assets/4eee1de1-0881-41b8-8abc-ea763243a03f" />
+Top 10 Estados con más actividad Sísmica 
+<img width="1484" height="881" alt="image" src="https://github.com/user-attachments/assets/4431dd39-1a50-4a1f-aed8-b498f3e8376d" />
+Mapa por día y hora en los meses del año  
+<img width="1914" height="1031" alt="image" src="https://github.com/user-attachments/assets/50832092-6b8b-40fc-80ee-a3dc57a361b0" />
+Frecuencia y Severidad por Región
+<img width="2082" height="770" alt="image" src="https://github.com/user-attachments/assets/cb336166-3a64-435a-b2f9-b3b30522c6de" />
+Sismos por decáda 
+<img width="1783" height="731" alt="image" src="https://github.com/user-attachments/assets/94a59906-4728-4e17-a26f-1bcba23cc327" />
+
+
+
